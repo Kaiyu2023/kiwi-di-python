@@ -1,10 +1,10 @@
 from copy import deepcopy
 from decimal import Decimal
 
-from examples.example_fastapi.domain import Product
-from easy_di import inject
+from examples.example_simple_app.domain import Product
+from easy_di import component
 
-@inject
+@component
 class ProductRepository:
 
     def __init__(self) -> None:

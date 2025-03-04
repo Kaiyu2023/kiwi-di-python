@@ -1,5 +1,5 @@
-from decorators import inject
+from decorators import component
 
 __all__ = [
-    inject
+    component
 ]
