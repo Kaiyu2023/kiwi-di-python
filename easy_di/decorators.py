@@ -1,5 +1,4 @@
 import abc
-import functools
 import inspect
 import typing
 
@@ -16,7 +15,7 @@ def component(qualifier: str = DEFAULT_QUALIFIER) -> Callable:
             _component=_component,
             component_qualifier=qualifier
         )
-        ComponentRegistry.register_component(entity_metadata)
+        ComponentRegistry().register_component(entity_metadata)
         return _component
     return decorator
 
