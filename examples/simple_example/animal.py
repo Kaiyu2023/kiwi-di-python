@@ -32,7 +32,8 @@ class AnimalFamily:
     def __init__(
         self,
         cat: Annotated[Animal, Qualifier("cat")],
-        dog: Annotated[Animal, Qualifier("dog")]
+        dog: Annotated[Animal, Qualifier("dog")],
+        dog_2: Animal = Dog()
     ):
-        self.members = [cat, dog]
+        self.members = [cat, dog, dog_2]
         print("Members:", self.members)

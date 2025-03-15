@@ -31,6 +31,9 @@ class ComponentRegistry(metaclass=Singleton):
         self._waiting_list: dict[_ComponentId, _WaitingListItem] = {}
         self._signal_dict: dict[_ComponentId, set[_ComponentId]] = {}
 
+    def get_instance(self, component_id: _ComponentId) -> Any:
+        return self._component_instances.get(component_id)
+
     def components(self) -> dict[_ComponentId, ComponentMetadata]:
         return deepcopy(self._component_metadata)
 
@@ -50,7 +53,8 @@ class ComponentRegistry(metaclass=Singleton):
 
     def wire_components(self) -> None:
         for component_id, metadata in self._component_metadata.items():
-            self._try_instantiate_component(component_id, metadata)
+            if component_id not in self._component_instances:
+                self._try_instantiate_component(component_id, metadata)
         # TODO(Kaiyu): Throw when some components cannot be instantiated
         logger.debug("All component instantiated.")
 

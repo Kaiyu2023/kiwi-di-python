@@ -12,3 +12,7 @@ class AmbiguousEntityError(RuntimeError):
         super().__init__(
             f"More than one {name} with {qualifier} found."
         )
+
+
+class InjectError(RuntimeError):
+    pass

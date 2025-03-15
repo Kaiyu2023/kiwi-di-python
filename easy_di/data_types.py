@@ -7,7 +7,7 @@ class Qualifier:
     name: str
 
 DEFAULT_QUALIFIER = "__default_qualifier__"
-
+NO_QUALIFIER = "__no_qualifier__"
 
 class _NoDefaultValue:
     pass

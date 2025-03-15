@@ -4,9 +4,9 @@ import typing
 
 from typing import Callable, Annotated, Any
 
-from data_types import Parameter, ComponentMetadata, Qualifier, DEFAULT_QUALIFIER, NO_DEFAULT_VALUE
-from registry import ComponentRegistry
-from exceptions import UnspecifiedParameterTypeError
+from data_types import Parameter, ComponentMetadata, Qualifier, DEFAULT_QUALIFIER, NO_DEFAULT_VALUE, NO_QUALIFIER
+from registry import ComponentRegistry, _ComponentId
+from exceptions import UnspecifiedParameterTypeError, InjectError
 
 
 def component(_component: Callable) -> Callable:
@@ -27,6 +27,36 @@ def named_component(qualifier: str = DEFAULT_QUALIFIER) -> Callable:
         ComponentRegistry().register_component(entity_metadata)
         return _component
     return decorator
+
+
+T = typing.TypeVar('T')
+def inject(func: Callable[[...], T]) -> Callable[[], T]:
+    registry = ComponentRegistry()
+    registry.wire_components()
+    func_metadata = _get_metadata(func, component_qualifier=NO_QUALIFIER)
+
+    unresolved_params = []
+    instantiated_params = {}
+    for param in func_metadata.parameters:
+        if param.default_value != NO_DEFAULT_VALUE:
+            instantiated_params[param.name] = param.default_value
+            continue
+
+        param_component_id = _ComponentId(name=param.type, qualifier=param.qualifier)
+        param_instance = registry.get_instance(param_component_id)
+        if param_instance is None:
+            unresolved_params.append(param)
+        else:
+            instantiated_params[param.name] = param_instance
+
+    if len(unresolved_params) > 0:
+        raise InjectError(
+            f"Cannot inject to function {func.__name__},"
+            "no @component or @named_component decorated class"
+            f"found for parameters {unresolved_params}."
+        )
+
+    return lambda : func(**instantiated_params)
 
 
 def _get_metadata(_component: Any, component_qualifier: str) -> ComponentMetadata:
@@ -80,9 +110,10 @@ def _get_params(component_name, signature):
 
 def _get_super_classes(_component: Any) -> list[str]:
     ret = []
-    for clazz in inspect.getmro(_component)[1:]:
-        if clazz not in {abc.ABC, object}:
-            ret.append(_get_fullname(clazz))
+    if hasattr(_component, "__mro__"):
+        for clazz in inspect.getmro(_component)[1:]:
+            if clazz not in {abc.ABC, object}:
+                ret.append(_get_fullname(clazz))
     return ret
 
 
