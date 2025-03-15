@@ -9,7 +9,16 @@ from registry import ComponentRegistry
 from exceptions import UnspecifiedParameterTypeError
 
 
-def component(qualifier: str = DEFAULT_QUALIFIER) -> Callable:
+def component(_component: Callable) -> Callable:
+    entity_metadata = _get_metadata(
+        _component=_component,
+        component_qualifier=DEFAULT_QUALIFIER
+    )
+    ComponentRegistry().register_component(entity_metadata)
+    return _component
+
+
+def named_component(qualifier: str = DEFAULT_QUALIFIER) -> Callable:
     def decorator(_component: Callable) -> Callable:
         entity_metadata = _get_metadata(
             _component=_component,
