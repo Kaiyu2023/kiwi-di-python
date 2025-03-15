@@ -8,8 +8,10 @@ from data_types import Parameter, ComponentMetadata, Qualifier, DEFAULT_QUALIFIE
 from registry import ComponentRegistry, _ComponentId
 from exceptions import UnspecifiedParameterTypeError, InjectError
 
+T = typing.TypeVar('T')
 
-def component(_component: Callable) -> Callable:
+
+def component(_component: T) -> T:
     entity_metadata = _get_metadata(
         _component=_component,
         component_qualifier=DEFAULT_QUALIFIER
@@ -18,8 +20,8 @@ def component(_component: Callable) -> Callable:
     return _component
 
 
-def named_component(qualifier: str = DEFAULT_QUALIFIER) -> Callable:
-    def decorator(_component: Callable) -> Callable:
+def named_component(qualifier: str = DEFAULT_QUALIFIER) -> T:
+    def decorator(_component: T) -> T:
         entity_metadata = _get_metadata(
             _component=_component,
             component_qualifier=qualifier
@@ -28,8 +30,6 @@ def named_component(qualifier: str = DEFAULT_QUALIFIER) -> Callable:
         return _component
     return decorator
 
-
-T = typing.TypeVar('T')
 def inject(func: Callable[[...], T]) -> Callable[[], T]:
     registry = ComponentRegistry()
     registry.wire_components()

@@ -33,7 +33,6 @@ class AnimalFamily:
         self,
         cat: Annotated[Animal, Qualifier("cat")],
         dog: Annotated[Animal, Qualifier("dog")],
-        dog_2: Animal = Dog()
     ):
-        self.members = [cat, dog, dog_2]
-        print("Members:", self.members)
+        self.cat = cat
+        self.dog = dog
