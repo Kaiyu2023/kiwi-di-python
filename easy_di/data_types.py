@@ -26,6 +26,7 @@ class Parameter:
 class ComponentMetadata:
     name: str
     parameters: set[Parameter]
-    return_annotation: Type
-    entity_qualifier: str
+    return_type: Type
+    qualifier: str
     instantiate_func: Callable
+    super_classes: list[str]

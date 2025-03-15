@@ -6,7 +6,7 @@ from typing import Any, Iterable
 from data_types import ComponentMetadata, NO_DEFAULT_VALUE
 from exceptions import AmbiguousEntityError
 
-logger = logging.getLogger("ComponentRegistry")
+logger = logging.getLogger("easydi")
 
 @dataclasses.dataclass(frozen=True)
 class _ComponentId:
@@ -32,14 +32,16 @@ class ComponentRegistry:
         return deepcopy(cls._component_metadata)
 
     @classmethod
-    def register_component(cls, entity_metadata: ComponentMetadata) -> None:
-        entity_id = _ComponentId(
-            name=entity_metadata.name,
-            qualifier=entity_metadata.entity_qualifier
+    def register_component(cls, component_metadata: ComponentMetadata) -> None:
+        component_id = _ComponentId(
+            name=component_metadata.name,
+            qualifier=component_metadata.qualifier
         )
-        if entity_id in cls._component_metadata:
-            raise AmbiguousEntityError(name=entity_id.name, qualifier=entity_id.qualifier)
-        cls._component_metadata[entity_id] = entity_metadata
+        if component_id in cls._component_metadata:
+            raise AmbiguousEntityError(name=component_id.name, qualifier=component_id.qualifier)
+
+        logger.debug("Registering component %s", component_metadata)
+        cls._component_metadata[component_id] = component_metadata
 
     @classmethod
     def load_config_values(cls) -> None:
@@ -56,7 +58,7 @@ class ComponentRegistry:
     def _try_instantiate_component(cls, component_id: _ComponentId, metadata: ComponentMetadata) -> None:
         if len(metadata.parameters) == 0:
             logger.debug("Instantiating %s with no parameters", component_id)
-            cls._component_instances[component_id] = metadata.instantiate_func()
+            cls._instantiate(component_id, metadata, {})
             return
 
         param_values: dict[str, Any] = {}
@@ -71,6 +73,7 @@ class ComponentRegistry:
 
             param_component_id = _ComponentId(name=param.type, qualifier=param.qualifier)
             if param_component_id in cls._component_instances:
+
                 param_values[param.name] = cls._component_instances[param_component_id]
                 continue
 
@@ -78,16 +81,27 @@ class ComponentRegistry:
 
         if len(unresolved_params) == 0:
             logger.debug("Instantiating %s with all its parameters", component_id)
-            cls._component_instances[component_id] = metadata.instantiate_func(**param_values)
-            if component_id in cls._waiting_list:
-                cls._waiting_list.pop(component_id)
-            cls._signal_waiting_list(instantiated_component=component_id)
+            cls._instantiate(component_id, metadata, param_values)
         else:
             logger.debug("Put %s on waiting list, waiting on %s", component_id, unresolved_params)
             cls._waiting_list[component_id] = _WaitingListItem(
                 metadata=metadata, waiting_on=set(unresolved_params.values())
             )
             cls._add_to_signal_dict(component_id, unresolved_params.values())
+
+    @classmethod
+    def _instantiate(cls, component_id: _ComponentId, metadata: ComponentMetadata, param_values: dict[str, Any]) -> None:
+        instance = metadata.instantiate_func(**param_values)
+
+        cls._component_instances[component_id] = instance
+        if component_id in cls._waiting_list:
+            cls._waiting_list.pop(component_id)
+        cls._signal_waiting_list(instantiated_component=component_id)
+
+        for super_class in metadata.super_classes:
+            super_class_id = _ComponentId(name=super_class, qualifier=metadata.qualifier)
+            cls._component_instances[super_class_id] = instance
+            cls._signal_waiting_list(instantiated_component=super_class_id)
 
     @classmethod
     def _add_to_signal_dict(cls, component_id: _ComponentId, unresolved_params: Iterable[_ComponentId]) -> None:

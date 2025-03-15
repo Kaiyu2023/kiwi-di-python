@@ -1,25 +1,45 @@
+import abc
+import functools
 import inspect
 import typing
 
 from typing import Callable, Annotated, Any
 
 from data_types import Parameter, ComponentMetadata, Qualifier, DEFAULT_QUALIFIER, NO_DEFAULT_VALUE
-from entity_registry import ComponentRegistry
+from registry import ComponentRegistry
 from exceptions import UnspecifiedParameterTypeError
 
 
-def component(_component: Callable, qualifier: str = DEFAULT_QUALIFIER) -> Callable:
-    entity_metadata = _get_metadata(
-        _component=_component,
-        component_qualifier=qualifier
-    )
-    ComponentRegistry.register_component(entity_metadata)
-    return _component
+def component(qualifier: str = DEFAULT_QUALIFIER) -> Callable:
+    def decorator(_component: Callable) -> Callable:
+        entity_metadata = _get_metadata(
+            _component=_component,
+            component_qualifier=qualifier
+        )
+        ComponentRegistry.register_component(entity_metadata)
+        return _component
+    return decorator
 
-def _get_metadata(_component: Callable, component_qualifier: str) -> ComponentMetadata:
+
+def _get_metadata(_component: Any, component_qualifier: str) -> ComponentMetadata:
+    component_name = _get_fullname(_component)
+
     signature = inspect.signature(_component)
-    component_name = f"{_component.__module__}.{_component.__name__}"
+    parameters = _get_params(component_name, signature)
+    return_type = signature.return_annotation if signature.return_annotation != signature.empty else None
+    super_classes = _get_super_classes(_component)
 
+    return ComponentMetadata(
+        name=component_name,
+        parameters=parameters,
+        return_type=return_type,
+        qualifier=component_qualifier,
+        instantiate_func=_component,
+        super_classes=super_classes
+    )
+
+
+def _get_params(component_name, signature):
     params_set = set()
     for param in signature.parameters.values():
         if param.annotation is param.empty:
@@ -42,16 +62,21 @@ def _get_metadata(_component: Callable, component_qualifier: str) -> ComponentMe
         params_set.add(
             Parameter(
                 name=param.name,
-                type=f"{param_annotation.__module__}.{param_annotation.__name__}",
+                type=_get_fullname(param_annotation),
                 default_value=param.default if param.default is not param.empty else NO_DEFAULT_VALUE,
                 qualifier=param_qualifier
             )
         )
+    return params_set
 
-    return ComponentMetadata(
-        name=component_name,
-        parameters=params_set,
-        return_annotation=signature.return_annotation,
-        entity_qualifier=component_qualifier,
-        instantiate_func=_component
-    )
+
+def _get_super_classes(_component: Any) -> list[str]:
+    ret = []
+    for clazz in inspect.getmro(_component)[1:]:
+        if clazz not in {abc.ABC, object}:
+            ret.append(_get_fullname(clazz))
+    return ret
+
+
+def _get_fullname(_component: Any) -> str:
+    return f"{_component.__module__}.{_component.__name__}"
