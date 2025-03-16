@@ -1,6 +1,4 @@
-from examples.simple_example.animal import AnimalFamilyfrom examples.simple_example.animal import AnimalFamily
-
-# Easy-DI
+# Kiwi-DI
 
 A decorator-based dependency injection library.
 
@@ -14,7 +12,7 @@ and you can use it everywhere.
 ```python
 
 # ------------------- flowers.py -----------------------
-from easy_di import component
+from kiwi_di import component
 
 
 @component
@@ -35,7 +33,7 @@ constructor parameter are either:
 ```python
 # ------------------- garden.py -----------------------
 
-from easy_di import component
+from kiwi_di import component
 from flowers import Rose, Tulip
 
 class Sunflower:
@@ -55,7 +53,7 @@ You can use `@inject` to inject the instances of registered classes to the where
 
 ```python
 # ------------------- main.py -----------------------
-from easy_di import inject
+from kiwi_di import inject
 from garden import Garden
 
 
@@ -87,7 +85,7 @@ In the example below, two instances of the class `Animal` will be created, each 
 # ------------------- animal.py -----------------------
 import abc
 from typing import override
-from easy_di import named_component
+from kiwi_di import named_component
 
 class Animal(abc.ABC):
 
@@ -116,7 +114,7 @@ When injecting these instance, use `Qualifier` to specify which instance you wan
 ```python
 # ------------------- animal_family.py -----------------------
 from typing import Annotated
-from easy_di import component, Qualifier
+from kiwi_di import component, Qualifier
 from animal import Animal
 
 @component
@@ -136,7 +134,7 @@ Check the output.
 ```python
 # ------------------- main.py -----------------------
 from animal import AnimalFamily
-from easy_di import inject
+from kiwi_di import inject
 
 
 @inject

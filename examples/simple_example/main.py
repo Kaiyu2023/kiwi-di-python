@@ -1,5 +1,5 @@
 from animal import AnimalFamily
-from easy_di import inject
+from kiwi_di import inject
 from garden.garden import Garden
 
 

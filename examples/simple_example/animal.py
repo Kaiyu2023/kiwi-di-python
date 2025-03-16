@@ -1,7 +1,7 @@
 import abc
 from typing import override, Annotated
 
-from easy_di import named_component, Qualifier, component
+from kiwi_di import named_component, Qualifier, component
 
 
 class Animal(abc.ABC):

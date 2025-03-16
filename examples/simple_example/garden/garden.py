@@ -1,4 +1,4 @@
-from easy_di import component
+from kiwi_di import component
 
 from .flowers import Rose, Tulip
 
