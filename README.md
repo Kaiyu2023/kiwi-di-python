@@ -2,6 +2,12 @@
 
 A decorator-based dependency injection library.
 
+## Installation
+
+```bash
+pip install kiwi-di
+```
+
 ## Quick Start
 
 ### Basic Usage
