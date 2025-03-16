@@ -1,7 +1,7 @@
 import abc
 from typing import override, Annotated
 
-from easy_di import named_component, Qualifier, component
+from kiwi_di import named_component, Qualifier, component
 
 
 class Animal(abc.ABC):
@@ -33,7 +33,6 @@ class AnimalFamily:
         self,
         cat: Annotated[Animal, Qualifier("cat")],
         dog: Annotated[Animal, Qualifier("dog")],
-        dog_2: Animal = Dog()
     ):
-        self.members = [cat, dog, dog_2]
-        print("Members:", self.members)
+        self.cat = cat
+        self.dog = dog
